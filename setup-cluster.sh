@@ -110,10 +110,19 @@ setup_remote_data_workers() {
     if [ "$DRY_RUN" == "false" ]; then
         # Copy the current directory contents to the temporary directory
         cp -R . "$TMP_CLUSTER_DIR"
-        scp_to_remote "$TMP_CLUSTER_DIR" "$USER@$IP:$HOME/clustering"
-        echo -e "${GREEN}${SUCCESS_ICON} Successfully copied clustering directory to $IP${RESET}"
+        # Check if the clustering repo exists on the remote server
+        if ! ssh_to_remote $IP $USER "[ -d $HOME/clustering/.git ]"; then
+            echo -e "${BLUE}${INFO_ICON} Clustering repo not found on $IP. Cloning...${RESET}"
+            ssh_to_remote $IP $USER "git clone https://github.com/tjsturos/clustering.git $HOME/clustering"
+            ssh_to_remote $IP $USER "chmod +x $HOME/clustering/*.sh"
+            echo -e "${GREEN}${SUCCESS_ICON} Successfully installed clustering directory to $IP${RESET}"
+        else
+            echo -e "${GREEN}${CHECK_ICON} Clustering repo found on $IP. Updating...${RESET}"
+            ssh_to_remote $IP $USER "cd $HOME/clustering && git pull"
+            echo -e "${GREEN}${SUCCESS_ICON} Successfully updated clustering directory to $IP${RESET}"
+        fi
+      
         # Make all files in the copied directory executable
-        ssh_to_remote $IP $USER "chmod +x $HOME/clustering/*.sh"
         echo -e "${GREEN}${SUCCESS_ICON} Made all bash scripts in $HOME/clustering directory executable on $IP${RESET}"
     else
         echo -e "${BLUE}${INFO_ICON} [DRY RUN] Would copy clustering directory to $IP ($USER)${RESET}"
