@@ -116,11 +116,7 @@ setup_remote_firewall() {
         ssh_to_remote $IP $REMOTE_USER "sudo ufw delete allow $START_PORT:$END_PORT/tcp"
         ssh_to_remote $IP $REMOTE_USER "sudo ufw delete allow $START_PORT:$END_PORT/udp"
         
-        # Delete any existing rules for individual ports in the range
-        for port in $(seq $START_PORT $END_PORT); do
-            ssh_to_remote $IP $REMOTE_USER "sudo ufw delete allow $port/tcp from $MASTER_IP"
-            ssh_to_remote $IP $REMOTE_USER "sudo ufw delete allow $port/udp from $MASTER_IP"
-        done
+        
         # Allow port range from START_INDEX to END_INDEX
         ssh_to_remote $IP $REMOTE_USER "sudo ufw allow $START_PORT:$END_PORT/tcp from $MASTER_IP"
         ssh_to_remote $IP $REMOTE_USER "sudo ufw allow $START_PORT:$END_PORT/udp from $MASTER_IP"
