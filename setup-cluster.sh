@@ -86,11 +86,13 @@ START_CORE_INDEX=$INDEX_START
 END_CORE_INDEX=$((INDEX_START + DATA_WORKER_COUNT - 1))
 
 if [ "$DRY_RUN" == "false" ]; then
-    sudo systemctl enable $QUIL_SERVICE_NAME.service
+    echo "Enabling $QUIL_SERVICE_NAME"
+    sudo systemctl enable $QUIL_SERVICE_NAME
+    echo "Enabling $QUIL_DATA_WORKER_SERVICE_NAME@{$START_CORE_INDEX..$END_CORE_INDEX}"
     bash -c "sudo systemctl enable $QUIL_DATA_WORKER_SERVICE_NAME\@{$START_CORE_INDEX..$END_CORE_INDEX}"
     sudo systemctl daemon-reload
 else
-    echo -e "${BLUE}${INFO_ICON} [DRY RUN] Would enable local $QUIL_DATA_WORKER_SERVICE_NAME@{$START_CORE_INDEX..$END_CORE_INDEX}.service${RESET}"
+    echo -e "${BLUE}${INFO_ICON} [DRY RUN] Would enable local $QUIL_DATA_WORKER_SERVICE_NAME@{$START_CORE_INDEX..$END_CORE_INDEX}${RESET}"
 fi
 
 setup_remote_data_workers() {

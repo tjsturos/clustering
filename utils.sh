@@ -81,9 +81,9 @@ ssh_to_remote() {
     shift 2
 
     if [ "$DRY_RUN" == "false" ]; then
-        ssh -i $SSH_CLUSTER_KEY -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$USER@$IP" "$COMMAND"
+        ssh -i $SSH_CLUSTER_KEY -q -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$USER@$IP" "$COMMAND"
     else
-        echo "[DRY RUN] Would run: ssh -i $SSH_CLUSTER_KEY -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $USER@$IP $COMMAND"
+        echo "[DRY RUN] Would run: ssh -i $SSH_CLUSTER_KEY -q -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $USER@$IP $COMMAND"
     fi
 }
 
@@ -155,14 +155,13 @@ status_master_service() {
 }
 
 create_data_worker_service_file() {
-    local service_file="/etc/systemd/system/$QUIL_DATA_WORKER_SERVICE_NAME\@.service"
    
     USER=$(whoami)
     if [ -z "$USER" ]; then
         echo "Error: Failed to get user information"
         exit 1
     fi
-    echo -e "${BLUE}${INFO_ICON} Updating $QUIL_DATA_WORKER_SERVICE_NAME\.service file...${RESET}"
+    echo -e "${BLUE}${INFO_ICON} Updating $DATA_WORKER_SERVICE_FILE file...${RESET}"
     local temp_file=$(mktemp)
     
     cat > "$temp_file" <<EOF
@@ -191,7 +190,7 @@ EOF
         cat "$temp_file"
         rm "$temp_file"
     else
-        sudo mv "$temp_file" "$service_file"
+        sudo mv "$temp_file" "$DATA_WORKER_SERVICE_FILE"
         sudo systemctl daemon-reload
         echo -e "${BLUE}${INFO_ICON} Service file created and systemd reloaded.${RESET}"
     fi
