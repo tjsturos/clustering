@@ -136,6 +136,7 @@ EOF
         rm "$temp_file"
     else
         sudo mv "$temp_file" "$MASTER_SERVICE_FILE"
+        sudo systemctl enable $QUIL_SERVICE_NAME
         sudo systemctl daemon-reload
         echo -e "${BLUE}${INFO_ICON} Service file created and systemd reloaded.${RESET}"
     fi
