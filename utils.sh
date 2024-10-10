@@ -91,7 +91,7 @@ scp_to_remote() {
     local FILE_ARGS=$1
 
     if [ "$DRY_RUN" == "false" ]; then
-
+        echo -e "${BLUE}${INFO_ICON} SCP command to remote: scp -i $SSH_CLUSTER_KEY -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $FILE_ARGS${RESET}"
         scp -i $SSH_CLUSTER_KEY -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $FILE_ARGS
     else
         echo "[DRY RUN] Would run: scp -i $SSH_CLUSTER_KEY -P $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $FILE_ARGS"
