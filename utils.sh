@@ -208,7 +208,6 @@ create_service_file_if_not_exists() {
     sudo systemctl daemon-reload
 }
 
-create_service_file_if_not_exists "$MASTER_SERVICE_FILE" create_master_service_file
 create_service_file_if_not_exists "$DATA_WORKER_SERVICE_FILE" create_data_worker_service_file
 
 enable_worker_services() {
