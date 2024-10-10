@@ -100,7 +100,6 @@ setup_remote_data_workers() {
     local USER=$2
     local CORE_INDEX_START=$3  
     local CORE_COUNT=$4
-    local TMP_CLUSTER_DIR=$(mktemp -d)
 
     if [ "$DRY_RUN" == "false" ]; then
         echo -e "${BLUE}${INFO_ICON} Configuring cluster's data workers on $IP ($USER)${RESET}"
@@ -111,7 +110,7 @@ setup_remote_data_workers() {
     # Use scp to copy the directory to the remote server
     if [ "$DRY_RUN" == "false" ]; then
         # Copy the current directory contents to the temporary directory
-        cp -R . "$TMP_CLUSTER_DIR"
+       
         # Check if the clustering repo exists on the remote server
         if ! ssh_to_remote $IP $USER "[ -d $HOME/clustering/.git ]"; then
             # Check if the clustering folder exists
@@ -124,7 +123,7 @@ setup_remote_data_workers() {
             echo -e "${BLUE}${INFO_ICON} Clustering repo not found on $IP. Cloning...${RESET}"
             ssh_to_remote $IP $USER "git clone https://github.com/tjsturos/clustering.git $HOME/clustering"
             ssh_to_remote $IP $USER "chmod +x $HOME/clustering/*.sh"
-            copy_cluster_config_to_server
+            copy_cluster_config_to_server "$IP" "$USER"
             echo -e "${GREEN}${SUCCESS_ICON} Successfully installed clustering directory to $IP${RESET}"
         else
             echo -e "${GREEN}${CHECK_ICON} Clustering repo found on $IP. Updating...${RESET}"
@@ -212,7 +211,7 @@ if [ "$MASTER" == "true" ]; then
 
         if ! echo "$(hostname -I)" | grep -q "$ip"; then
             copy_quil_config_to_server "$ip" "$remote_user"
-            copy_cluster_config_to_server
+            copy_cluster_config_to_server "$ip" "$remote_user"
             setup_remote_data_workers "$ip" "$remote_user" "$REMOTE_INDEX_START" "$data_worker_count" "$TMP_CLUSTER_DIR" &
         fi
         REMOTE_INDEX_START=$((REMOTE_INDEX_START + data_worker_count))
