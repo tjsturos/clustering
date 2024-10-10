@@ -91,11 +91,13 @@ scp_to_remote() {
     local FILE_ARGS=$1
 
     if [ "$DRY_RUN" == "false" ]; then
+
         scp -i $SSH_CLUSTER_KEY -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $FILE_ARGS
     else
-        echo "[DRY RUN] Would run: scp -i $SSH_CLUSTER_KEY -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $FILE_ARGS"
+        echo "[DRY RUN] Would run: scp -i $SSH_CLUSTER_KEY -P $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $FILE_ARGS"
     fi
 }
+
 MASTER_SERVICE_FILE="/etc/systemd/system/$QUIL_SERVICE_NAME.service"
 DATA_WORKER_SERVICE_FILE="/etc/systemd/system/$QUIL_DATA_WORKER_SERVICE_NAME@.service"
 create_master_service_file() {

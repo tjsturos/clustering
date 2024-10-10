@@ -166,7 +166,6 @@ copy_cluster_config_to_server() {
     local user=$2
     if [ "$DRY_RUN" == "false" ]; then  
         echo -e "${BLUE}${INFO_ICON} Copying $CLUSTER_CONFIG_FILE to $ip${RESET}"
-        ssh_to_remote $IP $USER "mkdir -p $HOME/clustering" 
         scp_to_remote "$CLUSTER_CONFIG_FILE $user@$ip:$HOME/clustering/cluster.yaml"
     else
         echo -e "${BLUE}${INFO_ICON} [DRY RUN] Would copy $CLUSTER_CONFIG_FILE to $ip ($user)${RESET}"
