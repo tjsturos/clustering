@@ -95,6 +95,39 @@ else
     echo -e "${BLUE}${INFO_ICON} [DRY RUN] Would enable local $QUIL_DATA_WORKER_SERVICE_NAME@{$START_CORE_INDEX..$END_CORE_INDEX}${RESET}"
 fi
 
+setup_remote_firewall() {
+    local IP=$1
+    local USER=$2
+    local START_INDEX=$3
+    local DATA_WORKER_COUNT=$4
+    local END_INDEX=$((START_INDEX + DATA_WORKER_COUNT - 1))
+    local MASTER_IP=$(yq eval '.main_ip' $CLUSTER_CONFIG_FILE)
+    if [ -z "$MASTER_IP" ]; then
+        echo -e "${RED}${WARNING_ICON} Error: master_ip not found in $CLUSTER_CONFIG_FILE${RESET}"
+        return 1
+    fi
+
+    echo -e "${BLUE}${INFO_ICON} Setting up remote firewall on $IP ($USER) for ports $START_INDEX to $END_INDEX${RESET}"
+
+    if [ "$DRY_RUN" == "false" ]; then
+        # Allow port range from START_INDEX to END_INDEX
+        ssh_to_remote $IP $USER "sudo ufw allow $START_INDEX:$END_INDEX/tcp"
+        ssh_to_remote $IP $USER "sudo ufw allow $START_INDEX:$END_INDEX/udp"
+        
+        # Reload ufw to apply changes
+        ssh_to_remote $IP $USER "sudo ufw reload"
+        
+        echo -e "${GREEN}${SUCCESS_ICON} Remote firewall setup completed on $IP${RESET}"
+    else
+        echo -e "${BLUE}${INFO_ICON} [DRY RUN] Would set up remote firewall on $IP ($USER) for ports $START_INDEX to $END_INDEX${RESET}"
+    fi
+}
+
+
+
+
+
+
 setup_remote_data_workers() {
     local IP=$1
     local USER=$2
@@ -213,6 +246,8 @@ if [ "$MASTER" == "true" ]; then
             copy_quil_config_to_server "$ip" "$remote_user"
             copy_cluster_config_to_server "$ip" "$remote_user"
             setup_remote_data_workers "$ip" "$remote_user" "$REMOTE_INDEX_START" "$data_worker_count" "$TMP_CLUSTER_DIR" &
+            # Call the function to set up the remote firewall
+            setup_remote_firewall "$REMOTE_IP" "$REMOTE_USER" "$REMOTE_INDEX_START" "$data_worker_count"
         fi
         REMOTE_INDEX_START=$((REMOTE_INDEX_START + data_worker_count))
     done
