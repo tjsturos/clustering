@@ -133,10 +133,6 @@ EOF
     fi
 }
 
-
-
-
-
 start_master_service() {
     sudo systemctl start $QUIL_SERVICE_NAME
 }   
@@ -202,6 +198,7 @@ create_service_file_if_not_exists() {
     else
         echo -e "${GREEN}${CHECK_ICON} Service file $service_file already exists.${RESET}"
     fi
+    sudo systemctl daemon-reload
 }
 
 create_service_file_if_not_exists "$MASTER_SERVICE_FILE" create_master_service_file

@@ -118,7 +118,7 @@ setup_remote_data_workers() {
                 ssh_to_remote $IP $USER "rm -rf $HOME/clustering"
                 echo -e "${GREEN}${SUCCESS_ICON} Successfully removed existing clustering folder on $IP${RESET}"
             fi
-            
+
             echo -e "${BLUE}${INFO_ICON} Clustering repo not found on $IP. Cloning...${RESET}"
             ssh_to_remote $IP $USER "git clone https://github.com/tjsturos/clustering.git $HOME/clustering"
             ssh_to_remote $IP $USER "chmod +x $HOME/clustering/*.sh"
@@ -210,6 +210,7 @@ if [ "$MASTER" == "true" ]; then
 
         if ! echo "$(hostname -I)" | grep -q "$ip"; then
             copy_quil_config_to_server "$ip" "$remote_user"
+            copy_cluster_config_to_server
             setup_remote_data_workers "$ip" "$remote_user" "$REMOTE_INDEX_START" "$data_worker_count" "$TMP_CLUSTER_DIR" &
         fi
         REMOTE_INDEX_START=$((REMOTE_INDEX_START + data_worker_count))
