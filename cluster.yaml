@@ -1,0 +1,22 @@
+ssh_key_path: $HOME/.ssh/cluster-key # set this to the path of the ssh key to use for the cluster
+master_service_name: ceremonyclient # set this to the name of the service to use for the cluster (not super important, but will be used for the systemd service name)
+data_worker_service_name: dataworker # set this to the name of the service to use for the cluster's data worker (not super important, but will be used for the systemd service name)
+quilibrium_node_path: $HOME/ceremonyclient/node # set this to the path of the quilibrium node binary
+quilibrium_client_path: $HOME/ceremonyclient/client # set this to the path of the quilibrium client binary
+node_binary_name: node-1.4.21.1-linux-amd64 # set this to the name of the quilibrium node binary
+quilibrium_config_dir: $HOME/ceremonyclient/node/.config # set this to the path of the quilibrium node config directory
+default_user: ubuntu # set this to the default user to use for the cluster's usernames (if not defined individually for a server below)
+ssh_port: 22
+
+# These variables are set automatically by the setup-cluster.sh script -- do not set these manually
+main_ip: "" # do not need to set this manually, it will be set by the setup-cluster.sh script
+start_core_index: 1 # start index for this server
+data_worker_count: 4 # number of data workers for this server 
+
+# Example:
+# servers:
+#   - ip: "192.168.1.100" the IP the master process will use to attempt connection
+#     user: "admin" # defaults to above default_user if not defined
+#     data_worker_count: 4 # optional, if not defined, the number of cores on the server will be used
+
+servers: []
