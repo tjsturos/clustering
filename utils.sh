@@ -7,8 +7,6 @@ GREEN="\e[32m"
 CHECK_ICON="\u2705"
 echo "Loading utils file..."
 
-
-
 get_os_arch() {
     local os=$(uname -s | tr '[:upper:]' '[:lower:]')
     local arch=$(uname -m)
@@ -91,9 +89,9 @@ scp_to_remote() {
         echo "[DRY RUN] Would run: scp -i $SSH_CLUSTER_KEY -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $FILE_ARGS"
     fi
 }
-
+MASTER_SERVICE_FILE="/etc/systemd/system/$QUIL_SERVICE_NAME.service"
+DATA_WORKER_SERVICE_FILE="/etc/systemd/system/$QUIL_DATA_WORKER_SERVICE_NAME@.service"
 create_master_service_file() {
-    local service_file="/etc/systemd/system/$QUIL_SERVICE_NAME.service"
     USER=$(whoami)
     GROUP=$(id -gn)
     if [ -z "$USER" ] || [ -z "$GROUP" ]; then
@@ -129,11 +127,15 @@ EOF
         cat "$temp_file"
         rm "$temp_file"
     else
-        sudo mv "$temp_file" "$service_file"
+        sudo mv "$temp_file" "$MASTER_SERVICE_FILE"
         sudo systemctl daemon-reload
         echo -e "${BLUE}${INFO_ICON} Service file created and systemd reloaded.${RESET}"
     fi
 }
+
+
+
+
 
 start_master_service() {
     sudo systemctl start $QUIL_SERVICE_NAME
@@ -190,10 +192,40 @@ EOF
     fi
 }
 
+create_service_file_if_not_exists() {
+    local service_file=$1
+    local create_function=$2
+
+    if [ ! -f "$service_file" ]; then
+        echo -e "${BLUE}${INFO_ICON} Service file $service_file does not exist. Creating it...${RESET}"
+        $create_function
+    else
+        echo -e "${GREEN}${CHECK_ICON} Service file $service_file already exists.${RESET}"
+    fi
+}
+
+create_service_file_if_not_exists "$MASTER_SERVICE_FILE" create_master_service_file
+create_service_file_if_not_exists "$DATA_WORKER_SERVICE_FILE" create_data_worker_service_file
+
+enable_worker_services() {
+    local START_CORE_INDEX=$1
+    local END_CORE_INDEX=$2
+    # start the master node
+    bash -c "sudo systemctl enable $QUIL_DATA_WORKER_SERVICE_NAME\@{$START_CORE_INDEX..$END_CORE_INDEX}"
+}
+
+disabled_worker_services() {
+    local START_CORE_INDEX=$1
+    local END_CORE_INDEX=$2
+    # start the master node
+    bash -c "sudo systemctl disable $QUIL_DATA_WORKER_SERVICE_NAME\@{$START_CORE_INDEX..$END_CORE_INDEX}"
+}
+
 start_worker_services() {
     local START_CORE_INDEX=$1
     local END_CORE_INDEX=$2
     # start the master node
+    enable_worker_services $START_CORE_INDEX $END_CORE_INDEX
     bash -c "sudo systemctl start $QUIL_DATA_WORKER_SERVICE_NAME\@{$START_CORE_INDEX..$END_CORE_INDEX}"
 }
 
@@ -201,6 +233,7 @@ stop_worker_services() {
     local START_CORE_INDEX=$1
     local END_CORE_INDEX=$2
     # stop the master node
+    disabled_worker_services $START_CORE_INDEX $END_CORE_INDEX
     bash -c "sudo systemctl stop $QUIL_DATA_WORKER_SERVICE_NAME\@{$START_CORE_INDEX..$END_CORE_INDEX}"
 }
 
