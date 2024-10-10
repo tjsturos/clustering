@@ -99,20 +99,22 @@ setup_remote_firewall() {
     local IP=$1
     local REMOTE_USER=$2
     local START_INDEX=$3
+    local BASE_PORT=40000
+    local START_PORT=$((BASE_PORT + START_INDEX - 1))
     local DATA_WORKER_COUNT=$4
-    local END_INDEX=$((START_INDEX + DATA_WORKER_COUNT - 1))
+    local END_PORT=$((BASE_PORT + START_INDEX + DATA_WORKER_COUNT - 1))
     local MASTER_IP=$(yq eval '.main_ip' $CLUSTER_CONFIG_FILE)
     if [ -z "$MASTER_IP" ]; then
         echo -e "${RED}${WARNING_ICON} Error: master_ip not found in $CLUSTER_CONFIG_FILE${RESET}"
         return 1
     fi
 
-    echo -e "${BLUE}${INFO_ICON} Setting up remote firewall on $IP ($REMOTE_USER) for ports $START_INDEX to $END_INDEX${RESET}"
+    echo -e "${BLUE}${INFO_ICON} Setting up remote firewall on $IP ($REMOTE_USER) for ports $START_PORT to $END_PORT${RESET}"
 
     if [ "$DRY_RUN" == "false" ]; then
         # Allow port range from START_INDEX to END_INDEX
-        ssh_to_remote $IP $REMOTE_USER "sudo ufw allow $START_INDEX:$END_INDEX/tcp"
-        ssh_to_remote $IP $REMOTE_USER "sudo ufw allow $START_INDEX:$END_INDEX/udp"
+        ssh_to_remote $IP $REMOTE_USER "sudo ufw allow $START_PORT:$END_PORT/tcp"
+        ssh_to_remote $IP $REMOTE_USER "sudo ufw allow $START_PORT:$END_PORT/udp"
         
         # Reload ufw to apply changes
         ssh_to_remote $IP $REMOTE_USER "sudo ufw reload"
@@ -122,9 +124,6 @@ setup_remote_firewall() {
         echo -e "${BLUE}${INFO_ICON} [DRY RUN] Would set up remote firewall on $IP ($USER) for ports $START_INDEX to $END_INDEX${RESET}"
     fi
 }
-
-
-
 
 
 
