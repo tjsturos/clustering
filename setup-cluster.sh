@@ -99,7 +99,7 @@ setup_remote_firewall() {
     local IP=$1
     local REMOTE_USER=$2
     local START_INDEX=$3
-    local BASE_PORT=40000
+    local BASE_PORT=$(yq eval '.base_port // 40000' $CLUSTER_CONFIG_FILE)
     local START_PORT=$((BASE_PORT + START_INDEX - 1))
     local DATA_WORKER_COUNT=$4
     local END_PORT=$((BASE_PORT + START_INDEX + DATA_WORKER_COUNT - 1))
