@@ -50,6 +50,13 @@ install_yq() {
 install_yq
 
 CLUSTER_CONFIG_FILE="$HOME/clustering/cluster.yaml"
+
+# Check if cluster config file exists
+if [ ! -f "$CLUSTER_CONFIG_FILE" ]; then
+    echo -e "${RED}${WARNING_ICON} Error: Cluster configuration file not found at $CLUSTER_CONFIG_FILE${RESET}"
+    exit 1
+fi
+
 export NODE_BINARY_NAME="$(yq eval '.node_binary_name' $CLUSTER_CONFIG_FILE)"
 export QUIL_NODE_PATH=$(eval echo "$(yq eval '.quilibrium_node_path // "$HOME/ceremonyclient/node"' $CLUSTER_CONFIG_FILE)")
 export QUIL_CLIENT_PATH=$(eval echo "$(yq eval '.quilibrium_client_path // "$HOME/ceremonyclient/client"' $CLUSTER_CONFIG_FILE)")

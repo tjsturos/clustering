@@ -122,6 +122,7 @@ setup_remote_data_workers() {
             echo -e "${BLUE}${INFO_ICON} Clustering repo not found on $IP. Cloning...${RESET}"
             ssh_to_remote $IP $USER "git clone https://github.com/tjsturos/clustering.git $HOME/clustering"
             ssh_to_remote $IP $USER "chmod +x $HOME/clustering/*.sh"
+            copy_cluster_config_to_server
             echo -e "${GREEN}${SUCCESS_ICON} Successfully installed clustering directory to $IP${RESET}"
         else
             echo -e "${GREEN}${CHECK_ICON} Clustering repo found on $IP. Updating...${RESET}"
