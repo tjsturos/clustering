@@ -112,6 +112,13 @@ setup_remote_data_workers() {
         cp -R . "$TMP_CLUSTER_DIR"
         # Check if the clustering repo exists on the remote server
         if ! ssh_to_remote $IP $USER "[ -d $HOME/clustering/.git ]"; then
+            # Check if the clustering folder exists
+            if ssh_to_remote $IP $USER "[ -d $HOME/clustering ]"; then
+                echo -e "${BLUE}${INFO_ICON} Existing clustering folder found on $IP. Removing...${RESET}"
+                ssh_to_remote $IP $USER "rm -rf $HOME/clustering"
+                echo -e "${GREEN}${SUCCESS_ICON} Successfully removed existing clustering folder on $IP${RESET}"
+            fi
+            
             echo -e "${BLUE}${INFO_ICON} Clustering repo not found on $IP. Cloning...${RESET}"
             ssh_to_remote $IP $USER "git clone https://github.com/tjsturos/clustering.git $HOME/clustering"
             ssh_to_remote $IP $USER "chmod +x $HOME/clustering/*.sh"
