@@ -261,7 +261,7 @@ get_cluster_ips() {
 
 ssh_command_to_each_server() {
     local command=$1
-     local config=$(yq eval . $CLUSTER_CONFIG_FILE)
+    local config=$(yq eval . $CLUSTER_CONFIG_FILE)
     local servers=$(echo "$config" | yq eval '.servers' -)
     local server_count=$(echo "$servers" | yq eval '. | length' -)
     
@@ -289,6 +289,33 @@ start_remote_server_services() {
 
 update_binaries_on_slave_servers() {
     ssh_command_to_each_server "cd $HOME/clustering && git pull && ./update-cluster-node.sh"
+}
+
+copy_file_to_each_server() {
+    local file_path=$1
+    local destination_path=$2
+    local command=$1
+    
+    local config=$(yq eval . $CLUSTER_CONFIG_FILE)
+    local servers=$(echo "$config" | yq eval '.servers' -)
+    local server_count=$(echo "$servers" | yq eval '. | length' -)
+    
+    for ((i=0; i<server_count; i++)); do
+        local server=$(echo "$servers" | yq eval ".[$i]" -)
+        local ip=$(echo "$server" | yq eval '.ip' -)
+        local remote_user=$(echo "$server" | yq eval ".user // \"$DEFAULT_USER\"" -)
+        
+        if [ -n "$ip" ] && [ "$ip" != "null" ]; then
+            if [ "$DRY_RUN" == "false" ]; then
+                if ! echo "$(hostname -I)" | grep -q "$ip"; then
+                    echo "Copying $file_path to $ip ($remote_user)"
+                    scp_to_remote $file_path $remote_user@$ip:$destination_path
+                fi
+            else
+                echo "[DRY RUN] Would copy $file_path to $remote_user@$ip:$destination_path"
+            fi
+        fi
+    done
 }
 
 update_quil_config() {

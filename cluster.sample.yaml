@@ -8,6 +8,7 @@ quilibrium_config_dir: $HOME/ceremonyclient/node/.config # set this to the path 
 default_user: ubuntu # set this to the default user to use for the cluster's usernames (if not defined individually for a server below)
 ssh_port: 22
 base_port: 40000
+github_ssh_key_path: $HOME/.ssh/github_key # set this to the path of the ssh key to use for github
 
 # These variables are set automatically by the setup-cluster.sh script -- do not set these manually
 main_ip: "" # do not need to set this manually, it will be set by the setup-cluster.sh script
