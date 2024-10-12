@@ -1,6 +1,13 @@
 #!/bin/bash
 source $HOME/clustering/utils.sh
 
+IS_MASTER=false
+# Check if --master option is passed
+if [[ "$*" == *"--master"* ]]; then
+   IS_MASTER=true
+fi
+
+
 download_files() {
   local available_version=$1
   local file_list=$2
@@ -51,44 +58,61 @@ get_versioned_qclient() {
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 delete_old_node_binaries() {
-    local node_binaries_dir="$SCRIPT_DIR/node_binaries"
     
+    local node_binaries_dir="$QUIL_NODE_PATH"
+    local current_version="$1"
+
     if [ -d "$node_binaries_dir" ]; then
-        echo "Deleting files in $node_binaries_dir"
-        if [ "$DRY_RUN" = false ]; then
-            rm -f "$node_binaries_dir"/*
-            echo "All files in $node_binaries_dir have been deleted."
-        else
-            echo "[DRY RUN] Would delete all files in $node_binaries_dir"
-        fi
+        echo "Checking for old node binaries in $node_binaries_dir"
+        for file in "$node_binaries_dir"/*; do
+            if [ -f "$file" ]; then
+                if [[ "$(basename "$file")" != *"$current_version"* ]]; then
+                    if [ "$DRY_RUN" = false ]; then
+                        echo "Deleting old binary: $file"
+                        rm -f "$file"
+                    else
+                        echo "[DRY RUN] Would delete old binary: $file"
+                    fi
+                fi
+            fi
+        done
+        echo "Finished checking for old node binaries."
     else
         echo "Directory $node_binaries_dir does not exist. No files to delete."
     fi
 }
 
 delete_old_qclient_binaries() {
-    local node_binaries_dir="$SCRIPT_DIR/node_binaries"
-    
-    if [ -d "$node_binaries_dir" ]; then
-        echo "Deleting files in $node_binaries_dir"
-        if [ "$DRY_RUN" = false ]; then
-            rm -f "$node_binaries_dir"/*
-            echo "All files in $node_binaries_dir have been deleted."
-        else
-            echo "[DRY RUN] Would delete all files in $node_binaries_dir"
-        fi
+    local qclient_binaries_dir="$QUIL_CLIENT_PATH"
+    local current_version="$1"
+
+    if [ -d "$qclient_binaries_dir" ]; then
+        echo "Checking for old qclient binaries in $qclient_binaries_dir"
+        for file in "$qclient_binaries_dir"/*; do
+            if [ -f "$file" ]; then
+                if [[ "$(basename "$file")" != *"$current_version"* ]]; then
+                    if [ "$DRY_RUN" = false ]; then
+                        echo "Deleting old binary: $file"
+                        rm -f "$file"
+                    else
+                        echo "[DRY RUN] Would delete old binary: $file"
+                    fi
+                fi
+            fi
+        done
+        echo "Finished checking for old qclient binaries."
     else
-        echo "Directory $node_binaries_dir does not exist. No files to delete."
+        echo "Directory $qclient_binaries_dir does not exist. No files to delete."
     fi
 }
 
-delete_old_node_binaries
-delete_old_qclient_binaries
+
 
 # Main script execution
-get_new_binaries() {
+update_binaries() {
     # Fetch current version
     local release_version=$(fetch_release_version)
+    local qclient_release_version=$(fetch_qclient_release_version)
     # Fetch available files
     local available_files=$(fetch_available_files "https://releases.quilibrium.com/release")
     local available_qclient_files=$(fetch_available_files "https://releases.quilibrium.com/qclient-release")
@@ -98,42 +122,20 @@ get_new_binaries() {
     local available_qclient_version=$(echo "$available_qclient_files" | grep -oP 'qclient-([0-9\.]+)+' | head -n 1 | tr -d 'node-')
 
     # Download all matching files if necessary
-    download_files "$release_version" "$available_files" $SCRIPT_DIR/node_binaries "https://releases.quilibrium.com"
-    sudo chmod +x $SCRIPT_DIR/node_binaries/$(get_versioned_node)
-    download_files "$release_version" "$available_qclient_files" $SCRIPT_DIR/qclient_binaries "https://releases.quilibrium.com"
-    sudo chmod +x $SCRIPT_DIR/qclient_binaries/$(get_versioned_qclient)
+    download_files "$release_version" "$available_files" $QUIL_NODE_PATH "https://releases.quilibrium.com"
+    sudo chmod +x $QUIL_NODE_PATH/$(get_versioned_node)
+    download_files "$qclient_release_version" "$available_qclient_files" $QUIL_CLIENT_PATH "https://releases.quilibrium.com"
+    sudo chmod +x $QUIL_CLIENT_PATH/$(get_versioned_qclient)
+
+    delete_old_node_binaries "$available_version"
+    delete_old_qclient_binaries "$available_qclient_version"
 }
 
-get_new_binaries
+update_binaries
 
-# Copy new binaries to each server in the cluster
-copy_binaries_to_servers() {
-    local cluster_ips=($(get_cluster_ips))
-    local NODE_BINARIES_DIR="$SCRIPT_DIR/node_binaries"
-    local QCLIENT_BINARIES_DIR="$SCRIPT_DIR/qclient_binaries"
-
-    
-    local NODE_BINARY_NAME="$(get_versioned_node)"
-    local QCLIENT_BINARY_NAME="$(get_versioned_qclient)"
-
-    for ip in "${cluster_ips[@]}"; do
-        local user=$(yq eval ".servers[] | select(.ip == \"$ip\") | .user // \"$DEFAULT_USER\"" "$CLUSTER_CONFIG_FILE")
-        
-        echo "Copying binaries to $user@$ip..."
-        if [ "$DRY_RUN" = false ]; then
-            ssh_to_remote $ip $user "mkdir -p $QUIL_NODE_PATH $QUIL_CLIENT_PATH"
-            echo "Created directories on $ip"
-            scp_to_remote "$NODE_BINARIES_DIR/* $user@$ip:$QUIL_NODE_PATH/"
-            scp_to_remote "$QCLIENT_BINARIES_DIR/* $user@$ip:$QUIL_CLIENT_PATH/"
-            ssh_to_remote $ip $user "chmod +x $QUIL_NODE_PATH/$NODE_BINARY_NAME $QUIL_CLIENT_PATH/$QCLIENT_BINARY_NAME"
-            echo "Binaries copied and permissions set for $ip"
-        else
-            echo "[DRY RUN] Would copy $NODE_BINARY_NAME and $QCLIENT_BINARY_NAME to $user@$ip and set execute permissions"
-        fi
-    done
-}
-
-copy_binaries_to_servers
+if [ "$IS_MASTER" = true ]; then
+    update_binaries_on_slave_servers
+fi
 
 
 

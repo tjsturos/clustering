@@ -259,11 +259,12 @@ get_cluster_ips() {
     echo "${ips[@]}"
 }
 
-start_remote_server_services() {
-    local config=$(yq eval . $CLUSTER_CONFIG_FILE)
+ssh_command_to_each_server() {
+    local command=$1
+     local config=$(yq eval . $CLUSTER_CONFIG_FILE)
     local servers=$(echo "$config" | yq eval '.servers' -)
     local server_count=$(echo "$servers" | yq eval '. | length' -)
-
+    
     for ((i=0; i<server_count; i++)); do
         local server=$(echo "$servers" | yq eval ".[$i]" -)
         local ip=$(echo "$server" | yq eval '.ip' -)
@@ -272,14 +273,22 @@ start_remote_server_services() {
         if [ -n "$ip" ] && [ "$ip" != "null" ]; then
             if [ "$DRY_RUN" == "false" ]; then
                 if ! echo "$(hostname -I)" | grep -q "$ip"; then
-                    echo "Starting services on $ip"
-                    ssh_to_remote $ip $remote_user "bash $HOME/clustering/start-cluster.sh"
+                    echo "Running $command on $ip ($remote_user)"
+                    ssh_to_remote $ip $remote_user "$command"
                 fi
             else
-                echo "[DRY RUN] Would run $HOME/clustering/start-cluster.sh on $remote_user@$ip"
+                echo "[DRY RUN] Would run $command on $remote_user@$ip"
             fi
         fi
     done
+}
+
+start_remote_server_services() {
+    ssh_command_to_each_server "bash $HOME/clustering/start-cluster.sh"
+}
+
+update_binaries_on_slave_servers() {
+    ssh_command_to_each_server "cd $HOME/clustering && git pull && ./update-cluster-node.sh"
 }
 
 update_quil_config() {
