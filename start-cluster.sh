@@ -64,6 +64,6 @@ if [ $START_CORE_INDEX -eq 1 ]; then
         echo -e "${RED}${WARNING_ICON} SSH file: $SSH_CLUSTER_KEY not found!${RESET}"
     fi
 
-    start_remote_server_services
+    ssh_command_to_each_server "bash $HOME/clustering/start-cluster.sh"
     start_master_service
 fi

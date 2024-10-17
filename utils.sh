@@ -284,14 +284,6 @@ ssh_command_to_each_server() {
     done
 }
 
-start_remote_server_services() {
-    ssh_command_to_each_server "bash $HOME/clustering/start-cluster.sh"
-}
-
-update_binaries_on_slave_servers() {
-    ssh_command_to_each_server "cd $HOME/clustering && git pull && ./update-cluster-node.sh"
-}
-
 copy_file_to_each_server() {
     local file_path=$1
     local destination_path=$2
