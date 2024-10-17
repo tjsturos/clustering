@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source $HOME/clustering/utils.sh
+
 get_os_arch() {
     local os=$(uname -s | tr '[:upper:]' '[:lower:]')
     local arch=$(uname -m)
