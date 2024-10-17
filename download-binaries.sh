@@ -35,22 +35,22 @@ cd $QUIL_NODE_PATH
 
 download_file() {
     local FILE_NAME=$1
-    log "Downloading $FILE_NAME..."
+    echo "Downloading $FILE_NAME..."
     # Check if the file already exists
     if [ -f "$FILE_NAME" ]; then
-        log "$FILE_NAME already exists. Skipping download."
+        echo "$FILE_NAME already exists. Skipping download."
         return
     fi
-    
+
     wget "https://releases.quilibrium.com/$FILE_NAME"
 
     # Check if the download was successful
     if [ $? -eq 0 ]; then
-        log "Successfully downloaded $FILE_NAME"
+        echo "Successfully downloaded $FILE_NAME"
         # Check if the file is the base binary (without .dgst or .sig suffix)
        
     else
-        log "Failed to download $file"
+        echo "Failed to download $file"
     fi
 
 }
@@ -60,16 +60,16 @@ for file in $NODE_RELEASE_FILES; do
     download_file $file
 
     if [[ $file =~ ^node-[0-9]+\.[0-9]+(\.[0-9]+)*(\.[0-9]+)?-${OS_ARCH}$ ]]; then
-        log "Making $file executable..."
+        echo "Making $file executable..."
         chmod +x "$file"
         if [ $? -eq 0 ]; then
-            log "Successfully made $file executable"
+            echo "Successfully made $file executable"
         else
-            log "Failed to make $file executable"
+            echo "Failed to make $file executable"
         fi
     fi
     
-    log "------------------------"
+    echo "------------------------"
 done
 
 
@@ -80,20 +80,20 @@ mkdir -p $QUIL_CLIENT_PATH
 cd $QUIL_CLIENT_PATH
 
 for file in $QCLIENT_RELEASE_FILES; do
-    log "Downloading $file..."
+    echo "Downloading $file..."
     download_file $file
 
     if [[ $file =~ ^qclient-[0-9]+\.[0-9]+(\.[0-9]+)*(\.[0-9]+)?-${OS_ARCH}$ ]]; then
-        log "Making $file executable..."
+        echo "Making $file executable..."
         chmod +x "$file"
         if [ $? -eq 0 ]; then
-            log "Successfully made $file executable"
+            echo "Successfully made $file executable"
         else
-            log "Failed to make $file executable"
+            echo "Failed to make $file executable"
         fi
     fi
     
-    log "------------------------"
+    echo "------------------------"
 done
 
-log "Download process completed."
+echo "Download process completed."
