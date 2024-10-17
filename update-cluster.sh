@@ -58,7 +58,7 @@ update_binaries() {
 
 update_binaries
 
-if [ "$IS_MASTER" = true ]; then
+if [ "$IS_MASTER" == "true" ]; then
     ssh_command_to_each_server "cd $HOME/clustering && git pull && bash ~/clustering/update-cluster.sh"
     sudo systemctl daemon-reload
     sudo systemctl restart $QUIL_SERVICE_NAME
