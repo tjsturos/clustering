@@ -36,6 +36,12 @@ cd $QUIL_NODE_PATH
 download_file() {
     local FILE_NAME=$1
     log "Downloading $FILE_NAME..."
+    # Check if the file already exists
+    if [ -f "$FILE_NAME" ]; then
+        log "$FILE_NAME already exists. Skipping download."
+        return
+    fi
+    
     wget "https://releases.quilibrium.com/$FILE_NAME"
 
     # Check if the download was successful
