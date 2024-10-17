@@ -63,6 +63,7 @@ export QUIL_CLIENT_PATH=$(eval echo "$(yq eval '.quilibrium_client_path // "$HOM
 export QUIL_SERVICE_NAME=$(eval echo "$(yq eval '.master_service_name // "ceremonyclient"' $CLUSTER_CONFIG_FILE)")
 export QUIL_CONFIG_DIR=$(eval echo "$(yq eval '.quilibrium_config_dir // "$HOME/ceremonyclient/node/.config"' $CLUSTER_CONFIG_FILE)")
 export QUIL_CONFIG_FILE="$QUIL_CONFIG_DIR/config.yml"
+export QUIL_KEYS_FILE="$QUIL_CONFIG_DIR/keys.yml"
 export QUIL_DATA_WORKER_SERVICE_NAME="$(yq eval '.data_worker_service_name // "dataworker"' $CLUSTER_CONFIG_FILE)"
 
 export SSH_CLUSTER_KEY=$(eval echo $(yq eval '.ssh_key_path // "$HOME/.ssh/cluster-key"' $CLUSTER_CONFIG_FILE))
