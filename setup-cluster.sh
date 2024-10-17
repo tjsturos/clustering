@@ -207,6 +207,18 @@ copy_cluster_config_to_server() {
         echo -e "${BLUE}${INFO_ICON} [DRY RUN] Would copy $CLUSTER_CONFIG_FILE to $ip ($user)${RESET}"
     fi
 }
+
+copy_quil_keys_to_server() {
+    local ip=$1
+    local user=$2
+    if [ "$DRY_RUN" == "false" ]; then  
+        echo -e "${BLUE}${INFO_ICON} Copying $CLUSTER_CONFIG_FILE to $ip${RESET}"
+        scp_to_remote "$QUIL_KEYS_FILE $user@$ip:$HOME/ceremonyclient/node/.config/keys.yml"
+    else
+        echo -e "${BLUE}${INFO_ICON} [DRY RUN] Would copy $QUIL_KEYS_FILE to $ip ($user)${RESET}"
+    fi
+}
+
 # Start the master and update the config
 if [ "$MASTER" == "true" ]; then
     if [ -f "$SSH_CLUSTER_KEY" ]; then
@@ -220,7 +232,6 @@ if [ "$MASTER" == "true" ]; then
     server_count=$(echo "$servers" | yq eval '. | length' -)
 
     # create a temporary directory for the files to be copied
-    TMP_CLUSTER_DIR=$(mktemp -d)
     REMOTE_INDEX_START=$INDEX_START
 
     for ((i=0; i<$server_count; i++)); do
@@ -246,16 +257,15 @@ if [ "$MASTER" == "true" ]; then
 
         if ! echo "$(hostname -I)" | grep -q "$ip"; then
             copy_quil_config_to_server "$ip" "$remote_user"
+            copy_quil_keys_to_server "$ip" "$remote_user"
             copy_cluster_config_to_server "$ip" "$remote_user"
-            setup_remote_data_workers "$ip" "$remote_user" "$REMOTE_INDEX_START" "$data_worker_count" "$TMP_CLUSTER_DIR" &
+            setup_remote_data_workers "$ip" "$remote_user" "$REMOTE_INDEX_START" "$data_worker_count" &
             # Call the function to set up the remote firewall
             setup_remote_firewall "$ip" "$remote_user" "$REMOTE_INDEX_START" "$data_worker_count"
         fi
         REMOTE_INDEX_START=$((REMOTE_INDEX_START + data_worker_count))
     done
 
-    # clean up the temporary directory
-    rm -rf "$TMP_CLUSTER_DIR"
 fi
 
 wait
